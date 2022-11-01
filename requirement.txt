@@ -1,0 +1,9 @@
+tqdm
+numpy==1.21.6
+pandas==1.3.5
+feature_engine==1.4.0
+sklearn
+shap==0.41.0
+seaborn
+hyperopt
+lightgbm==2.2.3
