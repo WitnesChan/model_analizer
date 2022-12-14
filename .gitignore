@@ -1,0 +1,7 @@
+__pycache__
+venv/
+.ipynb_checkpoints/
+.tmp*
+.vscode/
+data/DATASET_THESIS_2022.csv
+data/DATASET_THESIS_2022.csv

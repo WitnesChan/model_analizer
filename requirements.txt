@@ -7,3 +7,5 @@ shap==0.41.0
 seaborn
 hyperopt
 lightgbm==2.2.3
+fastapi
+uvicorn
