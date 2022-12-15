@@ -4,218 +4,136 @@
 #
 #    pip-compile requirements.txt
 #
-astor==0.8.1
-    # via formulaic
-boto3==1.26.30
-    # via -r requirements.txt
-botocore==1.29.30
-    # via
-    #   boto3
-    #   s3transfer
+anyio==3.6.2
+    # via starlette
 click==8.1.3
+    # via uvicorn
+cloudpickle==2.2.0
     # via
-    #   flask
-    #   nltk
+    #   hyperopt
+    #   shap
 contourpy==1.0.6
     # via matplotlib
 cycler==0.11.0
     # via matplotlib
-cython==0.29.32
-    # via linearmodels
-dash==2.7.1
-    # via
-    #   -r requirements.txt
-    #   dash-bootstrap-components
-dash-bootstrap-components==1.2.1
+fastapi==0.88.0
     # via -r requirements.txt
-dash-core-components==2.0.0
-    # via dash
-dash-html-components==2.0.0
-    # via dash
-dash-table==5.0.0
-    # via dash
-flask==2.2.2
-    # via dash
+feature-engine==1.4.0
+    # via -r requirements.txt
 fonttools==4.38.0
     # via matplotlib
-formulaic==0.3.4
-    # via linearmodels
-funcy==1.17
-    # via pyldavis
 future==0.18.2
-    # via pyldavis
-gensim==4.2.0
-    # via
-    #   -r requirements.txt
-    #   pyldavis
-gunicorn==20.1.0
+    # via hyperopt
+h11==0.14.0
+    # via uvicorn
+hyperopt==0.2.7
     # via -r requirements.txt
-importlib-metadata==5.1.0
-    # via flask
-interface-meta==1.3.0
-    # via formulaic
-ipynb==0.5.1
-    # via -r requirements.txt
-itsdangerous==2.1.2
-    # via flask
-jinja2==3.1.2
-    # via
-    #   flask
-    #   pyldavis
-jmespath==1.0.1
-    # via
-    #   boto3
-    #   botocore
+idna==3.4
+    # via anyio
 joblib==1.2.0
-    # via
-    #   nltk
-    #   pyldavis
-    #   scikit-learn
+    # via scikit-learn
 kiwisolver==1.4.4
     # via matplotlib
-linearmodels==4.27
+lightgbm==2.2.3
     # via -r requirements.txt
-markupsafe==2.1.1
-    # via
-    #   jinja2
-    #   werkzeug
+llvmlite==0.39.1
+    # via numba
 matplotlib==3.6.2
-    # via
-    #   -r requirements.txt
-    #   matplotlib-venn
-    #   seaborn
-    #   wordcloud
-matplotlib-inline==0.1.6
-    # via -r requirements.txt
-matplotlib-venn==0.11.7
-    # via -r requirements.txt
-meteostat==1.6.5
-    # via -r requirements.txt
-more-itertools==9.0.0
-    # via -r requirements.txt
-mypy-extensions==0.4.3
-    # via linearmodels
-nltk==3.8
-    # via
-    #   -r requirements.txt
-    #   textblob
-numexpr==2.8.4
-    # via pyldavis
-numpy==1.23.5
+    # via seaborn
+networkx==2.8.8
+    # via hyperopt
+numba==0.56.4
+    # via shap
+numpy==1.21.6
     # via
     #   -r requirements.txt
     #   contourpy
-    #   formulaic
-    #   gensim
-    #   linearmodels
+    #   feature-engine
+    #   hyperopt
+    #   lightgbm
     #   matplotlib
-    #   matplotlib-venn
-    #   meteostat
-    #   numexpr
+    #   numba
     #   pandas
     #   patsy
-    #   pyhdfe
-    #   pyldavis
     #   scikit-learn
     #   scipy
     #   seaborn
+    #   shap
     #   statsmodels
-    #   wordcloud
 packaging==22.0
     # via
     #   matplotlib
-    #   setuptools-scm
+    #   shap
     #   statsmodels
-pandas==1.5.2
+pandas==1.3.5
     # via
     #   -r requirements.txt
-    #   formulaic
-    #   linearmodels
-    #   meteostat
-    #   pyldavis
+    #   feature-engine
     #   seaborn
+    #   shap
     #   statsmodels
 patsy==0.5.3
     # via statsmodels
 pillow==9.3.0
-    # via
-    #   matplotlib
-    #   wordcloud
-plotly==5.11.0
-    # via
-    #   -r requirements.txt
-    #   dash
-property-cached==1.6.4
-    # via linearmodels
-pyhdfe==0.1.1
-    # via linearmodels
-pyldavis==3.3.1
-    # via -r requirements.txt
+    # via matplotlib
+py4j==0.10.9.7
+    # via hyperopt
+pydantic==1.10.2
+    # via fastapi
 pyparsing==3.0.9
     # via matplotlib
 python-dateutil==2.8.2
     # via
-    #   botocore
     #   matplotlib
     #   pandas
 pytz==2022.6
-    # via
-    #   meteostat
-    #   pandas
-regex==2022.10.31
-    # via nltk
-s3transfer==0.6.0
-    # via boto3
+    # via pandas
 scikit-learn==1.2.0
-    # via pyldavis
+    # via
+    #   feature-engine
+    #   lightgbm
+    #   shap
 scipy==1.9.3
     # via
-    #   formulaic
-    #   gensim
-    #   linearmodels
-    #   matplotlib-venn
-    #   pyhdfe
-    #   pyldavis
+    #   feature-engine
+    #   hyperopt
+    #   lightgbm
     #   scikit-learn
+    #   shap
     #   statsmodels
 seaborn==0.12.1
     # via -r requirements.txt
-setuptools-scm==6.4.2
-    # via linearmodels
+shap==0.41.0
+    # via -r requirements.txt
 six==1.16.0
     # via
+    #   hyperopt
     #   patsy
     #   python-dateutil
 sklearn==0.0.post1
-    # via
-    #   -r requirements.txt
-    #   pyldavis
-smart-open==6.3.0
-    # via gensim
-statsmodels==0.13.5
-    # via linearmodels
-tenacity==8.1.0
-    # via plotly
-textblob==0.17.1
     # via -r requirements.txt
+slicer==0.0.7
+    # via shap
+sniffio==1.3.0
+    # via anyio
+starlette==0.22.0
+    # via fastapi
+statsmodels==0.13.5
+    # via feature-engine
 threadpoolctl==3.1.0
     # via scikit-learn
-tomli==2.0.1
-    # via setuptools-scm
 tqdm==4.64.1
-    # via nltk
-traitlets==5.7.1
-    # via matplotlib-inline
-urllib3==1.26.13
-    # via botocore
-werkzeug==2.2.2
-    # via flask
-wordcloud==1.8.2.2
+    # via
+    #   -r requirements.txt
+    #   hyperopt
+    #   shap
+typing-extensions==4.4.0
+    # via
+    #   pydantic
+    #   starlette
+uvicorn==0.20.0
     # via -r requirements.txt
-wrapt==1.14.1
-    # via formulaic
-zipp==3.11.0
-    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
+
