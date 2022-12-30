@@ -40,14 +40,6 @@ tomli==2.0.1
 tqdm==4.64.1
 typing_extensions==4.4.0
 uvicorn==0.20.0
-<<<<<<< HEAD
-    # via -r requirements.txt
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools
-
-requests
-=======
 catboost==1.0.4
 lightgbm==3.3.3
 xgboost==1.7.1
@@ -55,4 +47,3 @@ optuna==3.0.5
 optuna-dashboard==0.8.0
 optuna-fast-fanova==0.0.3
 requests==2.28.1
->>>>>>> cccab22 (add docker enviroment and sqlite db for hyper-tune)
