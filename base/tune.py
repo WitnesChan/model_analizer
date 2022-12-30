@@ -1,0 +1,295 @@
+
+'''
+Optuna – summary:
+Visualizations in Optuna let you zoom in on the hyperparameter interactions and help you decide on how to run your next parameter sweep
+
+-- plot_contour: plots parameter interactions on an interactive chart. You can choose which hyperparameters you would like to explore
+
+-- plot_optimization_history: shows the scores from all trials as well as the best score so far at each point
+
+-- plot_parallel_coordinate: interactively visualizes the hyperparameters and scores
+
+-- plot_slice: shows the evolution of the search. You can see where in the hyperparameter space your search went and which parts of the space were explored more
+
+'''
+import os
+import numpy as np
+import pandas as pd
+
+import lightgbm as lgb
+import catboost  as cb
+import xgboost as xgb
+
+from sklearn.model_selection import StratifiedKFold
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
+from feature_engine import imputation as mdi
+
+import optuna
+from sklearn.metrics import roc_auc_score
+from optuna.integration import LightGBMPruningCallback, XGBoostPruningCallback
+
+from base import load_trainset
+import util
+
+
+def tune_lgb(trial_name = 'lgb_trials', n_trials = 100):
+    
+    def objective(trial):
+        ### define the hyper-parameter space
+        param_grid = {
+            # "device_type": trial.suggest_categorical("device_type", ['gpu']),
+            "metric": "auc",
+            "n_estimators": trial.suggest_int("n_estimators", 250, 350),
+            "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3),
+            "num_leaves": trial.suggest_int("num_leaves", 20, 3000, step=20),
+            "max_depth": trial.suggest_int("max_depth", 3, 12),
+            "min_data_in_leaf": trial.suggest_int("min_data_in_leaf", 200, 10000, step=100),
+            "lambda_l1": trial.suggest_int("lambda_l1", 1e-5, 100, step=5),
+            "lambda_l2": trial.suggest_int("lambda_l2", 1e-5, 100, step=5),
+            "min_gain_to_split": trial.suggest_float("min_gain_to_split", 0, 15),
+            "bagging_fraction": trial.suggest_float("bagging_fraction", 0.2, 0.95, step=0.1),
+            "bagging_freq": trial.suggest_categorical("bagging_freq", [1]),
+            "feature_fraction": trial.suggest_float("feature_fraction", 0.2, 0.95, step=0.1),
+        }
+
+        data, target = load_trainset(mode='local')
+        ### preprocess features
+        ### add later
+
+        ### define the 5-fold cross-validation set
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=1112324)
+        cv_scores = np.empty(5)
+    
+        for idx, (train_idx, test_idx) in enumerate(cv.split(data, target)):
+            X_train, X_test = data.iloc[train_idx], data.iloc[test_idx]
+            y_train, y_test = target[train_idx], target[test_idx]
+
+            model = lgb.LGBMClassifier(objective="binary", **param_grid)
+            model.fit(
+                X_train,
+                y_train,
+                eval_set=[(X_test, y_test)],
+                eval_metric="binary_logloss",
+                early_stopping_rounds=100,
+                callbacks=[LightGBMPruningCallback(trial, "auc")],  # Add a pruning callback
+            )
+            preds = model.predict_proba(X_test)[:,1]
+            cv_scores[idx] = roc_auc_score(y_test, preds)
+
+        ### average the 5 out-of-sample auc 
+        return np.mean(cv_scores)
+    
+
+    # default sampler in Optuna Tree-structured Parzen Estimater (TPE)
+    study = optuna.create_study(
+        storage=util.sqlite_path, 
+        study_name= trial_name, load_if_exists = True,
+        pruner= optuna.pruners.MedianPruner(n_warmup_steps=10),
+        direction="maximize"
+    )
+    
+    study.optimize(objective, n_trials= n_trials)
+
+    log_file = open('data/tune.log', mode = 'a')
+    fmt_log_str = f"LGB: Best value: {study.best_value} (params: {study.best_params})"
+    print(fmt_log_str)
+    log_file.write(fmt_log_str)
+
+def tune_xgb(trial_name = 'xgb_trials',  n_trials=100):
+
+    def objective(trial):
+  
+        ### define the hyper-parameter space
+        param_grid = {
+            "silent": 1,
+            "objective": "binary:logistic",
+            "eval_metric": "auc",
+            "booster": trial.suggest_categorical("booster", ["gbtree", "gblinear", "dart"]),
+            "lambda": trial.suggest_loguniform("lambda", 1e-8, 1.0),
+            "alpha": trial.suggest_loguniform("alpha", 1e-8, 1.0),
+            "n_estimators": trial.suggest_int("n_estimators", 50, 1000)
+        }
+
+        if param_grid["booster"] == "gbtree" or param_grid["booster"] == "dart":
+            param_grid["max_depth"] = trial.suggest_int("max_depth", 1, 9)
+            param_grid["eta"] = trial.suggest_loguniform("eta", 1e-8, 1.0)
+            param_grid["gamma"] = trial.suggest_loguniform("gamma", 1e-8, 1.0)
+            param_grid["grow_policy"] = trial.suggest_categorical("grow_policy", ["depthwise", "lossguide"])
+        if param_grid["booster"] == "dart":
+            param_grid["sample_type"] = trial.suggest_categorical("sample_type", ["uniform", "weighted"])
+            param_grid["normalize_type"] = trial.suggest_categorical("normalize_type", ["tree", "forest"])
+            param_grid["rate_drop"] = trial.suggest_loguniform("rate_drop", 1e-8, 1.0)
+            param_grid["skip_drop"] = trial.suggest_loguniform("skip_drop", 1e-8, 1.0)
+
+        data, target = load_trainset(mode='local')
+        ### preprocess features
+        ### add later
+
+
+        ### define the 5-fold cross-validation set
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=1112324)
+        cv_scores = np.empty(5)
+        
+        for idx, (train_idx, test_idx) in enumerate(cv.split(data, target)):
+            X_train, X_test = data.iloc[train_idx], data.iloc[test_idx]
+            y_train, y_test = target[train_idx], target[test_idx]
+            
+            model = xgb.XGBClassifier(**param_grid)
+            model.fit(
+                X_train,
+                y_train,
+                eval_set=[(X_test, y_test)],
+                early_stopping_rounds=100,
+                # callbacks=[XGBoostPruningCallback(trial, "auc")],  # Add a pruning callback
+            )
+            preds = model.predict_proba(X_test)[:,1]
+            cv_scores[idx] = roc_auc_score(y_test, preds)
+
+        ### average the 5 out-of-sample auc 
+        return np.mean(cv_scores)
+
+    # default sampler in Optuna Tree-structured Parzen Estimater (TPE)
+    study = optuna.create_study(
+        storage=util.sqlite_path, 
+        study_name= trial_name, load_if_exists = True,
+        pruner= optuna.pruners.MedianPruner(n_warmup_steps=10),
+        direction="maximize"
+    )
+    
+    study.optimize(objective, n_trials= n_trials)
+
+    log_file = open('../data/tune.log', mode = 'a')
+    fmt_log_str = f"XGB: Best value: {study.best_value} (params: {study.best_params})"
+    print(fmt_log_str)
+    log_file.write(fmt_log_str)
+
+def tune_cb(trial_name = 'cb_trials', n_trials=100):
+    
+    def objective(trial):
+
+        ### define the hyper-parameter space
+
+        param_grid = {
+            'max_depth': trial.suggest_int('max_depth', 3, 16),
+            'learning_rate': trial.suggest_categorical('learning_rate', [0.005, 0.02, 0.05, 0.08, 0.1]),
+            'n_estimators': trial.suggest_int('n_estimators', 2000, 8000),
+            'max_bin': trial.suggest_int('max_bin', 200, 400),
+            'min_data_in_leaf': trial.suggest_int('min_data_in_leaf', 1, 300),
+            'l2_leaf_reg': trial.suggest_float('l2_leaf_reg', 0.0001, 1.0, log = True),
+            'subsample': trial.suggest_float('subsample', 0.1, 0.8),
+            'random_seed': 42,
+            # 'task_type': 'GPU',
+            'loss_function': 'Logloss',
+            'eval_metric': 'AUC',
+            # 'bootstrap_type': 'Poisson'
+        }
+
+        data, target = load_trainset(mode='local')
+        ### preprocess features
+        ### add later
+        
+        ### define the 5-fold cross-validation set
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=1112324)
+        cv_scores = np.empty(5)
+        
+        for idx, (train_idx, test_idx) in enumerate(cv.split(data, target)):
+            X_train, X_test = data.iloc[train_idx], data.iloc[test_idx]
+            y_train, y_test = target[train_idx], target[test_idx]
+            
+            model = cb.CatBoostClassifier(**param_grid)
+            model.fit(
+                X_train,
+                y_train,
+                eval_set=[(X_test, y_test)],
+                early_stopping_rounds=100,
+                verbose = False
+                # callbacks=[XGBoostPruningCallback(trial, "auc")],  # Add a pruning callback
+            )
+            preds = model.predict_proba(X_test)[:,1]
+            cv_scores[idx] = roc_auc_score(y_test, preds)
+
+        ### average the 5 out-of-sample auc 
+        return np.mean(cv_scores)
+    
+    # default sampler in Optuna Tree-structured Parzen Estimater (TPE)
+    study = optuna.create_study(
+        storage=util.sqlite_path, 
+        study_name= trial_name, load_if_exists = True,
+        pruner= optuna.pruners.MedianPruner(n_warmup_steps=10),
+        direction="maximize"
+    )
+    
+    study.optimize(objective, n_trials= n_trials)
+
+    log_file = open('data/tune.log', mode = 'a')
+    fmt_log_str = f"CB: Best value: {study.best_value} (params: {study.best_params})"
+    print(fmt_log_str)
+    log_file.write(fmt_log_str)
+
+def tune_rf(trial_name = 'rf_trials', n_trials = 100):
+    
+    def objective(trial):
+        
+        ### define the hyper-parameter space
+        param_grid = {
+            'n_estimators': trial.suggest_int('n_estimators', 50, 1000),
+            'max_depth': trial.suggest_int('max_depth', 4, 50),
+            'min_samples_split': trial.suggest_int('min_samples_split', 1, 150),
+            'min_samples_leaf': trial.suggest_int('min_samples_leaf', 1, 60),
+        }
+
+        data, target = load_trainset(mode='local')
+        ### preprocess features
+        ### add later
+
+        ### define the 5-fold cross-validation set
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=1112324)
+        cv_scores = np.empty(5)
+        
+        for idx, (train_idx, test_idx) in enumerate(cv.split(data, target)):
+            X_train, X_test = data.iloc[train_idx], data.iloc[test_idx]
+            y_train, y_test = target[train_idx], target[test_idx]
+            
+            model = RandomForestClassifier(random_state= 42, **param_grid)
+
+            pipe = Pipeline([
+                ('imputer', mdi.MeanMedianImputer(imputation_method='median')),
+            ])
+            X_train = pipe.fit_transform(X_train)
+            X_test =  pipe.transform(X_test)
+
+            model.fit(X_train,y_train)
+            preds = model.predict_proba(X_test)[:,1]
+            cv_scores[idx] = roc_auc_score(y_test, preds)
+
+        ### average the 5 out-of-sample auc 
+        return np.mean(cv_scores)
+
+    # default sampler in Optuna Tree-structured Parzen Estimater (TPE)
+    study = optuna.create_study(
+        storage=util.sqlite_path, 
+        study_name= trial_name, load_if_exists = True,
+        pruner= optuna.pruners.MedianPruner(n_warmup_steps=10),
+        direction="maximize"
+    )
+    
+    study.optimize(objective, n_trials= n_trials)
+    
+    log_file = open('data/tune.log', mode = 'a')
+    fmt_log_str = f"RF: Best value: {study.best_value} (params: {study.best_params})"
+    print(fmt_log_str)
+    log_file.write(fmt_log_str)
+
+def tune_logit(trial_name = 'logit_trials'):
+    ### TO-DO
+    pass
+
+
+if __name__ == '__main__':
+
+    # tune_xgb(trial_name= 'xgb_trials_v1', n_trials = 100)
+    # tune_lgb(trial_name= 'lgb_trials_v2', n_trials = 100)
+    tune_rf(trial_name= 'rf_trials_v1', n_trials = 100)
+    
+    # tune_cb(trial_name= 'cb_trials_v1', n_trials = 100)

@@ -4,4 +4,7 @@ venv/
 .tmp*
 .vscode/
 data/DATASET_THESIS_2022.csv
-data/DATASET_THESIS_2022.csv
+*.npz
+*.gz
+notebooks/3xlgbm-timeseriessplit.ipynb
+thesis_model_analyzer_28_12_2022.zip
