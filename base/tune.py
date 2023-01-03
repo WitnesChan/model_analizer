@@ -33,7 +33,7 @@ from base import load_trainset
 import util
 
 
-def tune_lgb(trial_name = 'lgb_trials', n_trials = 100):
+def tune_lgb(trial_name = 'lgb_trials', n_trials = 100, device_type = 'cpu'):
     
     def objective(trial):
         ### define the hyper-parameter space
@@ -51,6 +51,7 @@ def tune_lgb(trial_name = 'lgb_trials', n_trials = 100):
             "bagging_fraction": trial.suggest_float("bagging_fraction", 0.2, 0.95, step=0.1),
             "bagging_freq": trial.suggest_categorical("bagging_freq", [1]),
             "feature_fraction": trial.suggest_float("feature_fraction", 0.2, 0.95, step=0.1),
+            'device_type': device_type
         }
 
         data, target = load_trainset(mode='local')
@@ -289,7 +290,7 @@ def tune_logit(trial_name = 'logit_trials'):
 if __name__ == '__main__':
 
     # tune_xgb(trial_name= 'xgb_trials_v1', n_trials = 100)
-    # tune_lgb(trial_name= 'lgb_trials_v2', n_trials = 100)
-    tune_rf(trial_name= 'rf_trials_v1', n_trials = 100)
-    
+    tune_lgb(trial_name= 'lgb_trials_v2', n_trials = 100, device_type= 'gpu')
+    # tune_rf(trial_name= 'rf_trials_v1', n_trials = 100)
     # tune_cb(trial_name= 'cb_trials_v1', n_trials = 100)
+    
