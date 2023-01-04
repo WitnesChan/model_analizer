@@ -18,7 +18,7 @@ import pandas as pd
 
 import lightgbm as lgb
 import catboost  as cb
-import xgboost as xgb
+import xgboost as xgb 
 
 from sklearn.model_selection import StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier
@@ -33,12 +33,11 @@ from base import load_trainset
 import util
 
 
-def tune_lgb(trial_name = 'lgb_trials', n_trials = 100, device_type = 'cpu'):
+def tune_lgb(trial_name = 'lgb_trials', n_trials = 100, device_type = 'gpu'):
     
     def objective(trial):
         ### define the hyper-parameter space
         param_grid = {
-            # "device_type": trial.suggest_categorical("device_type", ['gpu']),
             "metric": "auc",
             "n_estimators": trial.suggest_int("n_estimators", 250, 350),
             "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3),
@@ -72,8 +71,7 @@ def tune_lgb(trial_name = 'lgb_trials', n_trials = 100, device_type = 'cpu'):
                 y_train,
                 eval_set=[(X_test, y_test)],
                 eval_metric="binary_logloss",
-                early_stopping_rounds=100,
-                callbacks=[LightGBMPruningCallback(trial, "auc")],  # Add a pruning callback
+                callbacks=[LightGBMPruningCallback(trial, "auc"), lgb.early_stopping(100)],  # Add a pruning callback
             )
             preds = model.predict_proba(X_test)[:,1]
             cv_scores[idx] = roc_auc_score(y_test, preds)
@@ -109,7 +107,9 @@ def tune_xgb(trial_name = 'xgb_trials',  n_trials=100):
             "booster": trial.suggest_categorical("booster", ["gbtree", "gblinear", "dart"]),
             "lambda": trial.suggest_loguniform("lambda", 1e-8, 1.0),
             "alpha": trial.suggest_loguniform("alpha", 1e-8, 1.0),
-            "n_estimators": trial.suggest_int("n_estimators", 50, 1000)
+            "n_estimators": trial.suggest_int("n_estimators", 50, 1000),
+            # 'gpu_id': 0,
+            # 'tree_method': 'gpu_hist'
         }
 
         if param_grid["booster"] == "gbtree" or param_grid["booster"] == "dart":
@@ -204,8 +204,8 @@ def tune_cb(trial_name = 'cb_trials', n_trials=100):
                 X_train,
                 y_train,
                 eval_set=[(X_test, y_test)],
-                early_stopping_rounds=100,
-                verbose = False
+                verbose = False,
+                callbacks=[lgb.early_stopping(100)], 
                 # callbacks=[XGBoostPruningCallback(trial, "auc")],  # Add a pruning callback
             )
             preds = model.predict_proba(X_test)[:,1]
@@ -287,11 +287,20 @@ def tune_logit(trial_name = 'logit_trials'):
     ### TO-DO
     pass
 
+def check_gpu_support():
+    try:
+        data = np.random.rand(50, 2)
+        label = np.random.randint(2, size=50)
+        train_data = lgb.Dataset(data, label=label)
+        params = {'num_iterations': 1, 'device': 'gpu'}
+        gbm = lgb.train(params, train_set=train_data)
+        return True
+    except Exception as e:
+        return False
 
 if __name__ == '__main__':
-
-    # tune_xgb(trial_name= 'xgb_trials_v1', n_trials = 100)
-    tune_lgb(trial_name= 'lgb_trials_v2', n_trials = 100, device_type= 'gpu')
+    tune_xgb(trial_name= 'xgb_trials_v2', n_trials = 100)
+    # tune_lgb(trial_name= 'lgb_trials_v3', n_trials = 100, device_type= 'gpu')
     # tune_rf(trial_name= 'rf_trials_v1', n_trials = 100)
     # tune_cb(trial_name= 'cb_trials_v1', n_trials = 100)
     
