@@ -117,6 +117,7 @@ def tune_xgb(trial_name = 'xgb_trials',  n_trials=100):
             param_grid["eta"] = trial.suggest_loguniform("eta", 1e-8, 1.0)
             param_grid["gamma"] = trial.suggest_loguniform("gamma", 1e-8, 1.0)
             param_grid["grow_policy"] = trial.suggest_categorical("grow_policy", ["depthwise", "lossguide"])
+        
         if param_grid["booster"] == "dart":
             param_grid["sample_type"] = trial.suggest_categorical("sample_type", ["uniform", "weighted"])
             param_grid["normalize_type"] = trial.suggest_categorical("normalize_type", ["tree", "forest"])
@@ -174,16 +175,16 @@ def tune_cb(trial_name = 'cb_trials', n_trials=100):
         param_grid = {
             'max_depth': trial.suggest_int('max_depth', 3, 16),
             'learning_rate': trial.suggest_categorical('learning_rate', [0.005, 0.02, 0.05, 0.08, 0.1]),
-            'n_estimators': trial.suggest_int('n_estimators', 2000, 8000),
+            'n_estimators': trial.suggest_int('n_estimators', 20, 200),
             'max_bin': trial.suggest_int('max_bin', 200, 400),
             'min_data_in_leaf': trial.suggest_int('min_data_in_leaf', 1, 300),
             'l2_leaf_reg': trial.suggest_float('l2_leaf_reg', 0.0001, 1.0, log = True),
             'subsample': trial.suggest_float('subsample', 0.1, 0.8),
             'random_seed': 42,
-            # 'task_type': 'GPU',
+            'task_type': 'GPU',
             'loss_function': 'Logloss',
             'eval_metric': 'AUC',
-            # 'bootstrap_type': 'Poisson'
+            'bootstrap_type': 'Poisson'
         }
 
         data, target = load_trainset(mode='local')
