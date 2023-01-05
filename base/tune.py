@@ -104,12 +104,12 @@ def tune_xgb(trial_name = 'xgb_trials',  n_trials=100):
             "silent": 1,
             "objective": "binary:logistic",
             "eval_metric": "auc",
-            "booster": trial.suggest_categorical("booster", ["gbtree", "gblinear", "dart"]),
+            "booster": trial.suggest_categorical("booster", ["gbtree", "dart"]),
             "lambda": trial.suggest_loguniform("lambda", 1e-8, 1.0),
             "alpha": trial.suggest_loguniform("alpha", 1e-8, 1.0),
-            "n_estimators": trial.suggest_int("n_estimators", 50, 1000),
-            # 'gpu_id': 0,
-            # 'tree_method': 'gpu_hist'
+            "n_estimators": trial.suggest_int("n_estimators", 50, 500),
+            'gpu_id': 0,
+            'tree_method': 'gpu_hist'
         }
 
         if param_grid["booster"] == "gbtree" or param_grid["booster"] == "dart":
