@@ -108,8 +108,8 @@ def tune_xgb(trial_name = 'xgb_trials',  n_trials=100):
             "lambda": trial.suggest_loguniform("lambda", 1e-8, 1.0),
             "alpha": trial.suggest_loguniform("alpha", 1e-8, 1.0),
             "n_estimators": trial.suggest_int("n_estimators", 50, 1000),
-            # 'gpu_id': 0,
-            # 'tree_method': 'gpu_hist'
+            'gpu_id': 0,
+            'tree_method': 'gpu_hist'
         }
 
         if param_grid["booster"] == "gbtree" or param_grid["booster"] == "dart":
@@ -172,19 +172,20 @@ def tune_cb(trial_name = 'cb_trials', n_trials=100):
         ### define the hyper-parameter space
 
         param_grid = {
-            'max_depth': trial.suggest_int('max_depth', 3, 16),
-            'learning_rate': trial.suggest_categorical('learning_rate', [0.005, 0.02, 0.05, 0.08, 0.1]),
-            'n_estimators': trial.suggest_int('n_estimators', 2000, 8000),
-            'max_bin': trial.suggest_int('max_bin', 200, 400),
-            'min_data_in_leaf': trial.suggest_int('min_data_in_leaf', 1, 300),
-            'l2_leaf_reg': trial.suggest_float('l2_leaf_reg', 0.0001, 1.0, log = True),
-            'subsample': trial.suggest_float('subsample', 0.1, 0.8),
-            'random_seed': 42,
-            'task_type': 'GPU',
-            'loss_function': 'Logloss',
-            'eval_metric': 'AUC',
-            # 'bootstrap_type': 'Poisson'
-        }
+                    'max_depth': trial.suggest_int('max_depth', 3, 16),
+                    'learning_rate': trial.suggest_categorical('learning_rate', [0.005, 0.02, 0.05, 0.08, 0.1]),
+                    'n_estimators': trial.suggest_int('n_estimators', 20, 200),
+                    'max_bin': trial.suggest_int('max_bin', 200, 400),
+                    'min_data_in_leaf': trial.suggest_int('min_data_in_leaf', 1, 300),
+                    'l2_leaf_reg': trial.suggest_float('l2_leaf_reg', 0.0001, 1.0, log = True),
+                    'subsample': trial.suggest_float('subsample', 0.1, 0.8),
+                    'random_seed': 42,
+                    'task_type': 'GPU',
+                    'devices': '0',
+                    'loss_function': 'Logloss',
+                    'eval_metric': 'AUC',
+                    'bootstrap_type': 'Poisson'
+                }
 
         data, target = load_trainset(mode='local')
         ### preprocess features
@@ -204,7 +205,7 @@ def tune_cb(trial_name = 'cb_trials', n_trials=100):
                 y_train,
                 eval_set=[(X_test, y_test)],
                 verbose = False,
-                callbacks=[lgb.early_stopping(100)], 
+                early_stopping_rounds=100,
                 # callbacks=[XGBoostPruningCallback(trial, "auc")],  # Add a pruning callback
             )
             preds = model.predict_proba(X_test)[:,1]
@@ -292,14 +293,14 @@ def check_gpu_support():
         label = np.random.randint(2, size=50)
         train_data = lgb.Dataset(data, label=label)
         params = {'num_iterations': 1, 'device': 'gpu'}
-        gbm = lgb.train(params, train_set=train_data)
+        lgb.train(params, train_set=train_data)
         return True
     except Exception as e:
         return False
 
 if __name__ == '__main__':
-    tune_xgb(trial_name= 'xgb_trials_v2', n_trials = 100)
-    # tune_lgb(trial_name= 'lgb_trials_v3', n_trials = 100, device_type= 'gpu')
-    # tune_rf(trial_name= 'rf_trials_v1', n_trials = 100)
-    # tune_cb(trial_name= 'cb_trials_v1', n_trials = 100)
+    tune_xgb(trial_name= 'xgb_trials_gpu_v1', n_trials = 100)
+    # tune_lgb(trial_name= 'lgb_trials_gpu_v1', n_trials = 100, device_type= 'gpu')
+    # tune_rf(trial_name= 'rf_trials_gpu_v1', n_trials = 100)
+    # tune_cb(trial_name= 'cb_trials_gpu_v1', n_trials = 100)
     
