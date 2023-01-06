@@ -94,9 +94,11 @@ def tune_xgb(trial_name = 'xgb_trials',  n_trials=100):
             "early_stopping_rounds": 30,
             "n_jobs": -1,
             'verbosity': 0
-            # 'gpu_id': 0,
-            # 'tree_method': 'gpu_hist', 
         }
+
+        if device_type == 'gpu':
+            param_grid['gpu_id'] = 0 
+            param_grid['tree_method'] = 'gpu_hist'
 
         if param_grid["booster"] == "gbtree" or param_grid["booster"] == "dart":
             param_grid["max_depth"] = trial.suggest_int("max_depth", 1, 9)
