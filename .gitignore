@@ -8,3 +8,4 @@ data/DATASET_THESIS_2022.csv
 *.gz
 notebooks/3xlgbm-timeseriessplit.ipynb
 thesis_model_analyzer_28_12_2022.zip
+data/meta_trials.db

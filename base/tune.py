@@ -1,21 +1,4 @@
-
-'''
-Optuna – summary:
-Visualizations in Optuna let you zoom in on the hyperparameter interactions and help you decide on how to run your next parameter sweep
-
--- plot_contour: plots parameter interactions on an interactive chart. You can choose which hyperparameters you would like to explore
-
--- plot_optimization_history: shows the scores from all trials as well as the best score so far at each point
-
--- plot_parallel_coordinate: interactively visualizes the hyperparameters and scores
-
--- plot_slice: shows the evolution of the search. You can see where in the hyperparameter space your search went and which parts of the space were explored more
-
-'''
-import os
 import numpy as np
-import pandas as pd
-
 import lightgbm as lgb
 import catboost  as cb
 import xgboost as xgb 
@@ -183,6 +166,7 @@ def tune_cb(trial_name = 'cb_trials', n_trials=100):
             'subsample': trial.suggest_float('subsample', 0.1, 0.8),
             'random_seed': 42,
             'task_type': 'GPU',
+            'devices': '0',
             'loss_function': 'Logloss',
             'eval_metric': 'AUC',
             'bootstrap_type': 'Poisson'
@@ -206,7 +190,7 @@ def tune_cb(trial_name = 'cb_trials', n_trials=100):
                 y_train,
                 eval_set=[(X_test, y_test)],
                 verbose = False,
-                callbacks=[lgb.early_stopping(30)], 
+                early_stopping_rounds=30,
                 # callbacks=[XGBoostPruningCallback(trial, "auc")],  # Add a pruning callback
             )
             preds = model.predict_proba(X_test)[:,1]
@@ -294,7 +278,7 @@ def check_gpu_support():
         label = np.random.randint(2, size=50)
         train_data = lgb.Dataset(data, label=label)
         params = {'num_iterations': 1, 'device': 'gpu'}
-        gbm = lgb.train(params, train_set=train_data)
+        lgb.train(params, train_set=train_data)
         return True
     except Exception as e:
         return False
@@ -304,4 +288,8 @@ if __name__ == '__main__':
     # tune_lgb(trial_name= 'lgb_trials_v3', n_trials = 100, device_type= 'gpu')
     # tune_rf(trial_name= 'rf_trials_v1', n_trials = 100)
     # tune_cb(trial_name= 'cb_trials_v1', n_trials = 100)
+    tune_xgb(trial_name= 'xgb_trials_gpu_v1', n_trials = 100)
+    # tune_lgb(trial_name= 'lgb_trials_gpu_v1', n_trials = 100, device_type= 'gpu')
+    # tune_rf(trial_name= 'rf_trials_gpu_v1', n_trials = 100)
+    # tune_cb(trial_name= 'cb_trials_gpu_v1', n_trials = 100)
     
