@@ -78,7 +78,7 @@ def tune_lgb(trial_name = 'lgb_trials', n_trials = 100, device_type = 'gpu'):
     print(fmt_log_str)
     log_file.write(fmt_log_str)
 
-def tune_xgb(trial_name = 'xgb_trials',  n_trials=100):
+def tune_xgb(trial_name = 'xgb_trials',  n_trials=100, device_type = 'cpu'):
 
     def objective(trial):
   
@@ -290,7 +290,6 @@ if __name__ == '__main__':
     # tune_lgb(trial_name= 'lgb_trials_v3', n_trials = 100, device_type= 'gpu')
     # tune_rf(trial_name= 'rf_trials_v1', n_trials = 100)
     # tune_cb(trial_name= 'cb_trials_v1', n_trials = 100)
-    tune_xgb(trial_name= 'xgb_trials_gpu_v1', n_trials = 100)
     # tune_lgb(trial_name= 'lgb_trials_gpu_v1', n_trials = 100, device_type= 'gpu')
     # tune_rf(trial_name= 'rf_trials_gpu_v1', n_trials = 100)
     # tune_cb(trial_name= 'cb_trials_gpu_v1', n_trials = 100)
