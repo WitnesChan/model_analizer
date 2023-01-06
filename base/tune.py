@@ -105,44 +105,45 @@ def tune_xgb(trial_name = 'xgb_trials',  n_trials=100):
             "objective": "binary:logistic",
             "eval_metric": "auc",
             "booster": trial.suggest_categorical("booster", ["gbtree", "dart"]),
-            "lambda": trial.suggest_loguniform("lambda", 1e-8, 1.0),
-            "alpha": trial.suggest_loguniform("alpha", 1e-8, 1.0),
+            "lambda": trial.suggest_float("lambda", 1e-4, 1.0, log = True),
+            "alpha": trial.suggest_float("alpha", 1e-4, 1.0, log = True),
             "n_estimators": trial.suggest_int("n_estimators", 50, 500),
-            'gpu_id': 0,
-            'tree_method': 'gpu_hist'
+            "early_stopping_rounds": 30,
+            "n_jobs": -1,
+            'verbosity': 0
+            # 'gpu_id': 0,
+            # 'tree_method': 'gpu_hist', 
         }
 
         if param_grid["booster"] == "gbtree" or param_grid["booster"] == "dart":
             param_grid["max_depth"] = trial.suggest_int("max_depth", 1, 9)
-            param_grid["eta"] = trial.suggest_loguniform("eta", 1e-8, 1.0)
-            param_grid["gamma"] = trial.suggest_loguniform("gamma", 1e-8, 1.0)
+            param_grid["eta"] = trial.suggest_float("eta", 2e-2, 1.0, log = True)
+            param_grid["gamma"] = trial.suggest_float("gamma", 1e-4, 1.0, log = True)
             param_grid["grow_policy"] = trial.suggest_categorical("grow_policy", ["depthwise", "lossguide"])
         
         if param_grid["booster"] == "dart":
             param_grid["sample_type"] = trial.suggest_categorical("sample_type", ["uniform", "weighted"])
             param_grid["normalize_type"] = trial.suggest_categorical("normalize_type", ["tree", "forest"])
-            param_grid["rate_drop"] = trial.suggest_loguniform("rate_drop", 1e-8, 1.0)
-            param_grid["skip_drop"] = trial.suggest_loguniform("skip_drop", 1e-8, 1.0)
+            param_grid["rate_drop"] = trial.suggest_float("rate_drop", 1e-5, 1.0, log= True)
+            param_grid["skip_drop"] = trial.suggest_float("skip_drop", 1e-5, 1.0, log= True)
 
         data, target = load_trainset(mode='local')
         ### preprocess features
         ### add later
 
-
         ### define the 5-fold cross-validation set
         cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=1112324)
         cv_scores = np.empty(5)
-        
+    
         for idx, (train_idx, test_idx) in enumerate(cv.split(data, target)):
             X_train, X_test = data.iloc[train_idx], data.iloc[test_idx]
             y_train, y_test = target[train_idx], target[test_idx]
             
             model = xgb.XGBClassifier(**param_grid)
+
             model.fit(
-                X_train,
-                y_train,
-                eval_set=[(X_test, y_test)],
-                early_stopping_rounds=100,
+                X_train, y_train,
+                eval_set=[(X_test, y_test)]
                 # callbacks=[XGBoostPruningCallback(trial, "auc")],  # Add a pruning callback
             )
             preds = model.predict_proba(X_test)[:,1]
@@ -205,7 +206,7 @@ def tune_cb(trial_name = 'cb_trials', n_trials=100):
                 y_train,
                 eval_set=[(X_test, y_test)],
                 verbose = False,
-                callbacks=[lgb.early_stopping(100)], 
+                callbacks=[lgb.early_stopping(30)], 
                 # callbacks=[XGBoostPruningCallback(trial, "auc")],  # Add a pruning callback
             )
             preds = model.predict_proba(X_test)[:,1]
@@ -299,7 +300,7 @@ def check_gpu_support():
         return False
 
 if __name__ == '__main__':
-    tune_xgb(trial_name= 'xgb_trials_v2', n_trials = 100)
+    tune_xgb(trial_name= 'xgb_trials_v1', n_trials = 100)
     # tune_lgb(trial_name= 'lgb_trials_v3', n_trials = 100, device_type= 'gpu')
     # tune_rf(trial_name= 'rf_trials_v1', n_trials = 100)
     # tune_cb(trial_name= 'cb_trials_v1', n_trials = 100)
