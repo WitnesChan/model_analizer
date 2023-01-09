@@ -84,16 +84,15 @@ def tune_xgb(trial_name = 'xgb_trials',  n_trials=100, device_type = 'cpu'):
   
         ### define the hyper-parameter space
         param_grid = {
-            "silent": 1,
+            "silent": 0,
             "objective": "binary:logistic",
             "eval_metric": "auc",
             "booster": trial.suggest_categorical("booster", ["gbtree", "dart"]),
-            "lambda": trial.suggest_float("lambda", 1e-4, 1.0, log = True),
-            "alpha": trial.suggest_float("alpha", 1e-4, 1.0, log = True),
-            "n_estimators": trial.suggest_int("n_estimators", 50, 500),
+            "lambda": trial.suggest_float("lambda", 1e-3, 0.3, log = True),
+            "alpha": trial.suggest_float("alpha", 1e-3, 0.8, log = True),
+            "n_estimators": trial.suggest_int("n_estimators", 200, 700),
             "early_stopping_rounds": 30,
             "n_jobs": -1,
-            'verbosity': 0
         }
 
         if device_type == 'gpu':
@@ -101,16 +100,16 @@ def tune_xgb(trial_name = 'xgb_trials',  n_trials=100, device_type = 'cpu'):
             param_grid['tree_method'] = 'gpu_hist'
 
         if param_grid["booster"] == "gbtree" or param_grid["booster"] == "dart":
-            param_grid["max_depth"] = trial.suggest_int("max_depth", 1, 9)
-            param_grid["eta"] = trial.suggest_float("eta", 2e-2, 1.0, log = True)
-            param_grid["gamma"] = trial.suggest_float("gamma", 1e-4, 1.0, log = True)
+            param_grid["max_depth"] = trial.suggest_int("max_depth", 2, 4)
+            param_grid["eta"] = trial.suggest_float("eta", 0.1, 0.2, log = True)
+            param_grid["gamma"] = trial.suggest_float("gamma", 1e-2, 0.6, log = True)
             param_grid["grow_policy"] = trial.suggest_categorical("grow_policy", ["depthwise", "lossguide"])
         
         if param_grid["booster"] == "dart":
             param_grid["sample_type"] = trial.suggest_categorical("sample_type", ["uniform", "weighted"])
             param_grid["normalize_type"] = trial.suggest_categorical("normalize_type", ["tree", "forest"])
-            param_grid["rate_drop"] = trial.suggest_float("rate_drop", 1e-5, 1.0, log= True)
-            param_grid["skip_drop"] = trial.suggest_float("skip_drop", 1e-5, 1.0, log= True)
+            param_grid["rate_drop"] = trial.suggest_float("rate_drop", 1e-3, 0.6, log= True)
+            param_grid["skip_drop"] = trial.suggest_float("skip_drop", 1e-3, 0.2, log= True)
 
         data, target = load_trainset(mode='local')
         ### preprocess features
