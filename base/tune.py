@@ -104,6 +104,7 @@ def tune_xgb(trial_name = 'xgb_trials',  n_trials=100, device_type = 'cpu'):
             param_grid["eta"] = trial.suggest_float("eta", 0.1, 0.2, log = True)
             param_grid["gamma"] = trial.suggest_float("gamma", 1e-2, 0.6, log = True)
             param_grid["grow_policy"] = trial.suggest_categorical("grow_policy", ["depthwise", "lossguide"])
+            param_grid["subsample"] = trial.suggest_float("subsample", 0.6, 1.0, log = False)
             param_grid["sampling_method"] = trial.suggest_categorical("sampling_method", ['uniform', 'gradient_based'])
             param_grid["colsample_bytree"] = trial.suggest_float("colsample_bytree", 0.6, 1.0, log =False)
             param_grid["colsample_bylevel"] = trial.suggest_float("colsample_bylevel", 0.6, 1.0, log =False)
@@ -289,7 +290,7 @@ def check_gpu_support():
         return False
 
 if __name__ == '__main__':
-    tune_xgb(trial_name= 'xgb_trials_v1', n_trials = 100)
+    tune_xgb(trial_name= 'xgb_trials_v2', n_trials = 100)
     # tune_lgb(trial_name= 'lgb_trials_v3', n_trials = 100, device_type= 'gpu')
     # tune_rf(trial_name= 'rf_trials_v1', n_trials = 100)
     # tune_cb(trial_name= 'cb_trials_v1', n_trials = 100)
