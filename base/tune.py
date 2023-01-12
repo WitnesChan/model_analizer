@@ -93,6 +93,10 @@ def tune_xgb(trial_name = 'xgb_trials',  n_trials=100, device_type = 'cpu'):
             "n_estimators": trial.suggest_int("n_estimators", 200, 700),
             "early_stopping_rounds": 30,
             "n_jobs": -1,
+            "sampling_method": trial.suggest_categorical("sampling_method", ['uniform', 'gradient_based']),
+            "colsample_bytree": trial.sugggest_float("colsample_bytree", 0.6, 1.0, log =False),
+            "colsample_bylevel": trial.sugggest_float("colsample_bylevel", 0.6, 1.0, log =False),
+            "colsample_bynode":  trial.sugggest_float("colsample_bynode", 0.6, 1.0, log =False)
         }
 
         if device_type == 'gpu':
