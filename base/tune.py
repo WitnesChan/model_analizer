@@ -92,11 +92,7 @@ def tune_xgb(trial_name = 'xgb_trials',  n_trials=100, device_type = 'cpu'):
             "alpha": trial.suggest_float("alpha", 1e-3, 0.8, log = True),
             "n_estimators": trial.suggest_int("n_estimators", 200, 700),
             "early_stopping_rounds": 30,
-            "n_jobs": -1,
-            "sampling_method": trial.suggest_categorical("sampling_method", ['uniform', 'gradient_based']),
-            "colsample_bytree": trial.sugggest_float("colsample_bytree", 0.6, 1.0, log =False),
-            "colsample_bylevel": trial.sugggest_float("colsample_bylevel", 0.6, 1.0, log =False),
-            "colsample_bynode":  trial.sugggest_float("colsample_bynode", 0.6, 1.0, log =False)
+            "n_jobs": -1
         }
 
         if device_type == 'gpu':
@@ -108,6 +104,10 @@ def tune_xgb(trial_name = 'xgb_trials',  n_trials=100, device_type = 'cpu'):
             param_grid["eta"] = trial.suggest_float("eta", 0.1, 0.2, log = True)
             param_grid["gamma"] = trial.suggest_float("gamma", 1e-2, 0.6, log = True)
             param_grid["grow_policy"] = trial.suggest_categorical("grow_policy", ["depthwise", "lossguide"])
+            param_grid["sampling_method"] = trial.suggest_categorical("sampling_method", ['uniform', 'gradient_based'])
+            param_grid["colsample_bytree"] = trial.suggest_float("colsample_bytree", 0.6, 1.0, log =False)
+            param_grid["colsample_bylevel"] = trial.suggest_float("colsample_bylevel", 0.6, 1.0, log =False)
+            param_grid["colsample_bynode"] = trial.suggest_float("colsample_bynode", 0.6, 1.0, log =False)
         
         if param_grid["booster"] == "dart":
             param_grid["sample_type"] = trial.suggest_categorical("sample_type", ["uniform", "weighted"])
